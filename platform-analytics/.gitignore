@@ -1,0 +1,40 @@
+# Elasticsearch data
+elasticsearch/data/
+
+# Logstash
+logstash/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker volumes
+*.pid
+
+# Sensitive files - Environment variables with secrets
+.env
+.env.local
+.env.production
+.env.*.local
+secrets/

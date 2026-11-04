@@ -1,0 +1,67 @@
+name: chess-only
+
+services:
+  app_chessgame_front:
+    image: registry.gitlab.com/kdg-ti/integratieproject-j3/demo-content/chessgame/front:latest
+    ports:
+      - '3333:80'
+    networks:
+      - kdg-backend
+    depends_on:
+      - app_chessgame_back
+      - app_rabbitmq
+      - app_postgres
+
+  app_chessgame_back:
+    image: registry.gitlab.com/kdg-ti/integratieproject-j3/demo-content/chessgame/back:latest
+    ports:
+      - '8080:8080'
+    networks:
+      - kdg-backend
+    depends_on:
+      - app_postgres
+      - app_rabbitmq
+    environment:
+      - GAME_REGISTRATION_ID=8496c496-a884-48ed-9bb3-7c3aa50fb8ca
+      - DATASOURCE_URL=jdbc:postgresql://app_postgres:5432/postgres
+      - DATASOURCE_USER=user
+      - DATASOURCE_PASSWORD=password
+      - RABBIT_HOST=app_rabbitmq
+      - RABBIT_PORT=5672
+      - RABBIT_USER=user
+      - RABBIT_PASSWORD=password
+
+  app_postgres:
+    image: postgres:17.6-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'postgres'
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5443:5432'
+    networks:
+      - kdg-backend
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql
+      - ./init-scripts/sql:/docker-entrypoint-initdb.d
+
+  app_rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: 'user'
+      RABBITMQ_DEFAULT_PASS: 'password'
+    ports:
+      - "5672:5672" #AMQP
+      - "15672:15672" #MGMT
+    networks:
+      - kdg-backend
+    volumes:
+      - ./rabbitmq/data/:/var/lib/rabbitmq/
+      - ./rabbitmq/log/:/var/log/rabbitmq/
+
+networks:
+  kdg-backend:
+    name: kdg-back-network
+    driver: bridge

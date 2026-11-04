@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <!-- Accessible without sign-in -->
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/store</loc>
+        <description>
+            Store page where users can buy new games and purchase credit saldo.
+        </description>
+        <requiresAuth>false</requiresAuth>
+    </url>
+
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/achievements</loc>
+        <description>
+            Overview of all achievements for owned games, including achieved and unachieved ones.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+    <!-- Requires sign-in -->
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/library</loc>
+        <description>
+            Library page showing all games owned by the signed-in user.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/friends</loc>
+        <description>
+            Manage friends list, send friend requests, and remove existing friends.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/profile/:userName</loc>
+        <description>
+            Profile page of a user where you can see their name.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/userPreferences</loc>
+        <description>
+            User preferences page for theme selection, account information, and signing out.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+    <!-- Template routes -->
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/games/:gameId</loc>
+        <description>
+            Gameplay page for a specific game.
+        </description>
+        <requiresAuth>true</requiresAuth>
+        <isTemplate>true</isTemplate>
+    </url>
+
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/Lobbies</loc>
+        <description>
+            A list of all the lobbies.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+    <url>
+        <loc>https://team14-platform-frontend.civato.org/api/lobby/:lobbyId</loc>
+        <description>
+            A specific lobbies information page where you can see what game will be played and who is going to play.
+        </description>
+        <requiresAuth>true</requiresAuth>
+    </url>
+
+</urlset>

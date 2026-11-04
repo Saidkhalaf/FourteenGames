@@ -1,0 +1,6 @@
+/postgresql/
+/idp_mysql_data/
+rabbitmq/
+/.idea/
+./development-test-server/postgresql
+/development-test-server/idp_mysql_data

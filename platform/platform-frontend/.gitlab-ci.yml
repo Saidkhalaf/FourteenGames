@@ -1,0 +1,75 @@
+image: node:24
+
+stages:
+  - build
+  - test
+  - quality-gate
+  - docker-publish
+
+cache:
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+
+test:
+  stage: test
+  script:
+    - npm install
+    - npm run test-coverage
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 hour
+    when: always
+  dependencies:
+    - build
+
+megalinter:
+  stage: quality-gate
+  image: oxsecurity/megalinter-java:v7
+  script: ["true"]
+  dependencies:
+    - build
+    - test
+  variables:
+    DEFAULT_WORKSPACE: $CI_PROJECT_DIR
+    GITLAB_ACCESS_TOKEN_MEGALINTER: $ACCESS_TOKEN
+    DISABLE_ERRORS: true
+    VALIDATE_ALL_CODEBASE: false
+    DISABLE: YAML,SPELL,MARKDOWN,DOCKERFILE
+    APPLY_FIXES: none
+  artifacts:
+    when: always
+    expose_as: 'Quality Reports'
+    paths:
+      - megalinter-reports/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+
+docker-publish:
+  image: docker:24.0.5-cli
+  stage: docker-publish
+  services:
+    - docker:24.0.5-dind
+  dependencies:
+    - build
+    - test
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"

@@ -1,0 +1,33 @@
+# Dependencies, generated output and local tooling
+**/node_modules/
+**/dist/
+**/build/
+**/target/
+**/.gradle/
+**/.idea/
+**/.vscode/
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+**/venv/
+**/*.tsbuildinfo
+**/coverage/
+**/coverage.xml
+**/.coverage
+# Local secrets and persisted service state
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.log
+**/idp_mysql_data/
+**/postgresql/data/
+**/rabbitmq/data/
+**/rabbitmq/log/
+**/.erlang.cookie
+.DS_Store
+Thumbs.db

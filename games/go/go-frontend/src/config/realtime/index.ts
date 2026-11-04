@@ -1,0 +1,1 @@
+export const refetchInterval=2000;

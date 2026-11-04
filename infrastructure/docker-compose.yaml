@@ -1,0 +1,131 @@
+name: team_14
+
+services:
+  app_postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'postgres'
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5443:5432'
+    networks:
+      - backend
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql
+      - ./init-scripts/sql:/docker-entrypoint-initdb.d/
+
+  idp_mysql:
+    image: mysql:9.0.1
+    volumes:
+      - kc_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DATABASE: 'keycloak'
+      MYSQL_USER: 'keycloak'
+      MYSQL_PASSWORD: 'password'
+    ports:
+      - '3307:3306'
+    networks:
+      - kc
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak", "--password=password" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  idp_keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    environment:
+      KEYCLOAK_ADMIN: 'admin'
+      KEYCLOAK_ADMIN_PASSWORD: 'admin'
+      KC_DB: 'mysql'
+      KC_DB_URL_HOST: 'idp_mysql'
+      KC_DB_URL_DATABASE: 'keycloak'
+      KC_DB_USERNAME: 'keycloak'
+      KC_DB_PASSWORD: 'password'
+      KC_HEALTH_ENABLED: 'true' # Required to enable the /health endpoints
+    command: start-dev --import-realm
+    ports:
+      - "8180:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep 'HTTP/1.1 200 OK' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      idp_mysql:
+        condition: service_healthy
+    networks:
+      - kc
+    volumes:
+      # make sure to delete any 'authorizationSettings' from realm-export.json
+      - ./keycloak/import/realm-export.json:/opt/keycloak/data/import/FourteenGames-realm.json
+
+  app_rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: 'user'
+      RABBITMQ_DEFAULT_PASS: 'password'
+    ports:
+      - "5672:5672" #AMQP
+      - "15672:15672" #MGMT
+    networks:
+      - backend
+    volumes:
+      - ./rabbitmq/data/:/var/lib/rabbitmq/
+      - ./rabbitmq/log/:/var/log/rabbitmq/
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  app_chessgame_front:
+    image: registry.gitlab.com/kdg-ti/integratieproject-j3/demo-content/chessgame/front:latest
+    ports:
+      - '3333:80'
+    networks:
+      - backend
+    depends_on:
+      app_chessgame_back:
+        condition: service_started
+      app_rabbitmq:
+        condition: service_healthy
+      app_postgres:
+        condition: service_started
+
+  app_chessgame_back:
+    image: registry.gitlab.com/kdg-ti/integratieproject-j3/demo-content/chessgame/back:latest
+    ports:
+      - '8080:8080'
+    networks:
+      - backend
+    depends_on:
+      app_postgres:
+        condition: service_started
+      app_rabbitmq:
+        condition: service_healthy
+    environment:
+      GAME_REGISTRATION_ID: 8496c496-a884-48ed-9bb3-7c3aa50fb8ca
+      DATASOURCE_URL: jdbc:postgresql://app_postgres:5432/postgres?currentSchema=chess
+      DATASOURCE_USER: user
+      DATASOURCE_PASSWORD: password
+      RABBIT_HOST: app_rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: user
+      RABBIT_PASSWORD: password
+
+volumes:
+  kc_data:
+
+networks:
+  kc:
+    name: kc-network
+    driver: bridge
+  backend:
+    name: back-network
+    driver: bridge

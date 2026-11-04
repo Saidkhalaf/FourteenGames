@@ -1,0 +1,16 @@
+{
+  "name": "test-ai-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "ttt-ai-server": "node TTT/ttt-mock-ai.js",
+    "go-ai-server": "node go/go-mock-ai.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

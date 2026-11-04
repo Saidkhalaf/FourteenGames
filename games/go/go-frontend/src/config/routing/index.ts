@@ -1,0 +1,1 @@
+export const basename = import.meta.env.VITE_BASENAME;

@@ -1,0 +1,78 @@
+image: gradle:8.10-jdk21
+
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+  - test
+  - quality-gate
+  - docker-publish
+
+cache:
+  paths:
+    - .gradle/
+    - build/
+
+build:
+  stage: build
+  script:
+    - gradle clean build -x test --no-daemon
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 hour
+
+test:
+  stage: test
+  script:
+    - gradle test --no-daemon
+  services:
+    - name: docker:24.0.5-dind
+      command: [ "--tls=false" ]
+  dependencies:
+    - build
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - build/test-results/test/*.xml
+
+megalinter:
+  stage: quality-gate
+  image: oxsecurity/megalinter-java:v7
+  script: ["true"]
+  variables:
+    DEFAULT_WORKSPACE: $CI_PROJECT_DIR
+    GITLAB_ACCESS_TOKEN_MEGALINTER: $ACCESS_TOKEN
+    DISABLE_ERRORS: true
+    VALIDATE_ALL_CODEBASE: false
+    DISABLE: YAML,SPELL,MARKDOWN,DOCKERFILE
+    APPLY_FIXES: none
+  artifacts:
+    when: always
+    expose_as: 'Quality Reports'
+    paths:
+      - megalinter-reports/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+docker-publish:
+  image: docker:24.0.5-cli
+  stage: docker-publish
+  services:
+    - docker:24.0.5-dind
+  dependencies:
+    - build
+    - test
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"

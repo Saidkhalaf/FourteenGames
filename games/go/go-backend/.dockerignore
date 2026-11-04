@@ -1,0 +1,6 @@
+.gitlab
+.gradle
+.idea
+/build
+README.md
+.env

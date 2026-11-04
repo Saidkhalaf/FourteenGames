@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "ai-catalog-api.url",
+      "type": "java.lang.String",
+      "description": "The base api url for talking to the restaurant catalog."
+    },
+    {
+      "name": "game-state-service.ai-uuid",
+      "type": "java.util.UUID",
+      "description": "The uuid of the ai player seeded via dataseeder."
+    },
+    {
+      "name": "cors.allowed-origins",
+      "type": "java.util.UUID",
+      "description": "origins allowed for cross origin requests."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+image: gradle:8.10-jdk21
+
+stages:
+  - build
+  - docker-publish
+
+cache:
+  paths:
+    - .gradle/
+    - build/
+
+build:
+  stage: build
+  script:
+    - gradle clean build -x test --no-daemon
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 hour
+
+docker-publish:
+  image: docker:24.0.5-cli
+  stage: docker-publish
+  services:
+    - docker:24.0.5-dind
+  dependencies:
+    - build
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
